@@ -797,7 +797,11 @@ for t in analyzer("我的好朋友是李明;我爱北京天安门;IBM和Microsof
 
 ## bosonnlp
 
-### 中文分词、词性
+摘自：<https://blog.csdn.net/m0_37952030/article/details/78304088>
+
+### 分词与词性标注
+
+核心函数：nlp.tag(contents, space_mode=0, oov_level=3, t2s=0, special_char_conv=0)
 
 ```python
 # https://bosonnlp.com/console
@@ -820,6 +824,8 @@ for d in result:
 
 ### 情感分析
 
+核心函数：nlp.sentiment(data, model = 'general')
+
 ```python
 s = ['他是个傻逼', '美好的世界']
 
@@ -828,4 +834,199 @@ result = nlp.sentiment(s)
 print(result)
 
 # [[0.6519134382562579, 0.34808656174374203], [0.92706110187413, 0.07293889812586994]]
+# 第一个值为非负面概率，第二个值为负面概率，两个值相加和为 1
 ```
+
+| 模型名  | 行业 | URL                                                  |
+| ------- | ---- | ---------------------------------------------------- |
+| general | 通用 | <http://api.bosonnlp.com/sentiment/analysis>         |
+| auto    | 汽车 | <http://api.bosonnlp.com/sentiment/analysis?auto>    |
+| kitchen | 厨具 | <http://api.bosonnlp.com/sentiment/analysis?kitchen> |
+| food    | 餐饮 | <http://api.bosonnlp.com/sentiment/analysis?food>    |
+| news    | 新闻 | <http://api.bosonnlp.com/sentiment/analysis?news>    |
+| weibo   | 微博 | <http://api.bosonnlp.com/sentiment/analysis?weibo>   |
+
+### 语义联想
+
+核心函数：nlp.suggest(data)
+
+```python
+term = '粉丝'
+result = nlp.suggest(term, top_k=10)
+for score, word in result:
+    print(score, word)
+
+# 0.9999999999999994 粉丝/n
+# 0.4860246796131101 脑残粉/n
+# 0.4763802597640094 听众/n
+# 0.457471160374369 球迷/n
+# 0.44279396622121603 观众/n
+# 0.43996388413040877 喷子/n
+# 0.43706751168681585 乐迷/n
+# 0.4365171009654034 鳗鱼/n
+# 0.43573534612109743 水军/n
+# 0.4332090811336725 好友/n
+```
+
+### 关键词提取
+
+核心函数：nlp.extract_keywords(text, top_k=None, segmented=False)
+
+```python
+keywords = nlp.extract_keywords('病毒式媒体网站：让新闻迅速蔓延', top_k=2)
+
+print(keywords) 
+
+# [[0.5686631749811326, '蔓延'], [0.5671956747680966, '病毒']]
+
+# 返回权重和关键词，所有关键词的权重的平方和为 1
+```
+
+### 新闻分类
+
+核心函数：nlp.classify(data)
+
+```python
+s = ['俄否决安理会谴责叙军战机空袭阿勒颇平民',
+     '邓紫棋谈男友林宥嘉：我觉得我比他唱得好',
+     'Facebook收购印度初创公司']
+
+result = nlp.classify(s)
+
+print(result)
+
+# [5, 4, 8]
+```
+
+| 编号 | 分类 | 编号 | 分类   |
+| ---- | ---- | ---- | ------ |
+| 0    | 体育 | 7    | 科技   |
+| 1    | 教育 | 8    | 互联网 |
+| 2    | 财经 | 9    | 房产   |
+| 3    | 社会 | 10   | 国际   |
+| 4    | 娱乐 | 11   | 女人   |
+| 5    | 军事 | 12   | 汽车   |
+| 6    | 国内 | 13   | 游戏   |
+
+### 新闻摘要
+
+核心函数：summary(title, content, word_limit=0.3, not_exceed=False)
+
+```python
+content = (
+    '腾讯科技讯（刘亚澜）10月22日消息，前优酷土豆技术副总裁'
+    '黄冬已于日前正式加盟芒果TV，出任CTO一职。'
+    '资料显示，黄冬历任土豆网技术副总裁、优酷土豆集团产品'
+    '技术副总裁等职务，曾主持设计、运营过优酷土豆多个'
+    '大型高容量产品和系统。'
+    '此番加入芒果TV或与芒果TV计划自主研发智能硬件OS有关。'
+)
+
+title = '前优酷土豆技术副总裁黄冬加盟芒果TV任CTO'
+
+print(nlp.summary(title, content, 0.1))
+
+# 腾讯科技讯（刘亚澜）10月22日消息，前优酷土豆技术副总裁黄冬已于日前正式加盟芒果TV，出任CTO一职。
+```
+
+### 时间转换
+
+**核心函数：nlp.convert_time(data, basetime=None)**
+
+```python
+import datetime
+
+r = nlp.convert_time(
+    "2013年二月二十八日下午四点三十分二十九秒",
+    datetime.datetime.today())
+
+print(r)
+
+# {'timestamp': '2013-02-28 16:30:29', 'type': 'timestamp'}
+```
+
+```python
+import datetime
+
+print(nlp.convert_time("今天晚上8点到明天下午3点", datetime.datetime(2015, 9, 1)))
+
+# {'timespan': ['2015-09-01 20:00:00', '2015-09-02 15:00:00'], 'type': 'timespan_0'}
+```
+
+### 依存文法分析
+
+| 名称 | 解释                              | 举例                                                         |
+| ---- | --------------------------------- | ------------------------------------------------------------ |
+| ROOT | 核心词                            | 警察*打击*犯罪。                                             |
+| SBJ  | 主语成分                          | [*](http://docs.bosonnlp.com/depparser.html#id2)警察*打击犯罪。 |
+| OBJ  | 宾语成分                          | 警察打击*犯罪*。                                             |
+| PU   | 标点符号                          | 你好*!*                                                      |
+| TMP  | 时间成分                          | [*](http://docs.bosonnlp.com/depparser.html#id4)昨天下午*下雨了。 |
+| LOC  | 位置成分                          | 我*在北京*开会。                                             |
+| MNR  | 方式成分                          | 我*以最快的速度*冲向了终点。                                 |
+| POBJ | 介宾成分                          | 他*对客人*很热情。                                           |
+| PMOD | 介词修饰                          | 这个产品*直*到今天才完成。                                   |
+| NMOD | 名词修饰                          | 这是一个*大*错误。                                           |
+| VMOD | 动词修饰                          | 我*狠狠地*打*了*他。                                         |
+| VRD  | 动结式 （第二动词为第一动词结果） | 福建省*涌现出*大批人才。                                     |
+| DEG  | 连接词“的”结构                    | [*](http://docs.bosonnlp.com/depparser.html#id6)我*的妈妈是超人。 |
+| DEV  | “地”结构                          | 他*狠狠*地看我一眼。                                         |
+| LC   | 位置词结构                        | 我在*书房*里吃饭。                                           |
+| M    | 量词结构                          | 我有*一*只小猪。                                             |
+| AMOD | 副词修饰                          | 一批*大*中企业折戟上海。                                     |
+| PRN  | 括号成分                          | 北京（*首都*）很大。                                         |
+| VC   | 动词“是”修饰                      | 我把你*看做*是妹妹。                                         |
+| COOR | 并列关系                          | 希望能*贯彻* [*](http://docs.bosonnlp.com/depparser.html#id8)执行*该方针 |
+| CS   | 从属连词成分                      | 如果*可行*，我们进行推广。                                   |
+| DEC  | 关系从句“的”                      | 这是*以前不曾遇到过*的情况。                                 |
+
+```python
+s = ['我以最快的速度吃了午饭']
+
+result = nlp.depparser(s)
+
+print(' '.join(result[0]['word']))
+print(' '.join(result[0]['tag']))
+print(result[0]['head'])
+print(' '.join(result[0]['role']))
+
+#我 以 最 快 的 速度 吃 了 午饭
+# PN P AD VA DEC NN VV AS NN
+# [6, 6, 3, 4, 5, 1, -1, 6, 6]
+# SBJ MNR VMOD DEC NMOD POBJ ROOT VMOD OBJ
+```
+
+### 命名实体识别
+
+| 时间   | time         |
+| ------ | ------------ |
+| 地点   | location     |
+| 人名   | person_name  |
+| 组织名 | org_name     |
+| 公司名 | company_name |
+| 产品名 | product_name |
+| 职位   | job_title    |
+
+```python
+s = ['对于该小孩是不是郑尚金的孩子，目前已做亲子鉴定，结果还没出来，'
+     '纪检部门仍在调查之中。成都商报记者 姚永忠']
+result = nlp.ner(s)[0]
+words = result['word']
+entities = result['entity']
+
+for entity in entities:
+    print(''.join(words[entity[0]:entity[1]]), entity[2])
+
+# 郑尚金 person_name
+# 成都商报 product_name
+# 记者 job_title
+# 姚永忠 person_name
+```
+
+### 文本聚类引擎
+
+http://docs.bosonnlp.com/cluster.html
+
+### **典型意见**
+
+**http://docs.bosonnlp.com/comments.html**
