@@ -1,4 +1,4 @@
-#  NLP
+seNLP
 
 ## RE
 
@@ -1067,4 +1067,150 @@ http://docs.bosonnlp.com/cluster.html
 ## pynlpir
 
 GITHUB:<https://github.com/NLPIR-team/NLPIR>
+
+### 分词与词性标注
+
+```python
+import pynlpir
+
+s = 'NLPIR分词系统前身为2000年发布的ICTCLAS词法分析系统'
+
+pynlpir.open()
+
+r = pynlpir.segment(s)
+
+for i in r:
+    print('{}-{}'.format(i[0], i[1]))
+
+# NLPIR-noun
+# 分词-verb
+# 系统-noun
+# 前身-noun
+# 为-preposition
+# 2000年-time word
+# 发布-verb
+# 的-particle
+# ICTCLAS-noun
+# 词法-noun
+# 分析-verb
+# 系统-noun
+
+pynlpir.close()
+```
+
+```python
+r = pynlpir.segment(s, pos_tagging=False)
+
+print(r)
+
+# ['NLPIR', '分词', '系统', '前身', '为', '2000年', '发布', '的', 'ICTCLAS', '词法', '分析', '系统']
+```
+
+```python
+r = pynlpir.segment(s, pos_tagging=False, pos_names='child')
+
+print(r)
+
+# ['NLPIR', '分词', '系统', '前身', '为', '2000年', '发布', '的', 'ICTCLAS', '词法', '分析', '系统']
+
+# 默认是parent， 表示获取该词性的最顶级词性，child表示获取该词性的最具体的信息，all表示获取该词性相关的所有词性信息，相当于从其顶级词性到该词性的一条路径
+```
+
+### 关键词提取
+
+```python
+r = pynlpir.get_key_words(s, weighted=True, max_words=5)
+
+for i in r:
+    print('{}- {}'.format(i[0], i[1]))
+
+# 系统- 3.04
+# NLPIR- 2.4
+# ICTCLAS- 2.4
+# 分词- 2.0
+# 前身- 2.0
+```
+
+## snownlp
+
+GitHub:<https://github.com/isnowfy/snownlp>
+
+## WordCloud
+
+```python
+from pyecharts import WordCloud
+
+name = ['Sam S Club', 'Macys', 'Amy Schumer', 'Jurassic World', 'Charter Communications',
+        'Chick Fil A', 'Planet Fitness', 'Pitch Perfect', 'Express', 'Home', 'Johnny Depp',
+        'Lena Dunham', 'Lewis Hamilton', 'KXAN', 'Mary Ellen Mark', 'Farrah Abraham',
+        'Rita Ora', 'Serena Williams', 'NCAA baseball tournament', 'Point Break']
+
+value = [10000, 6181, 4386, 4055, 2467, 2244, 1898, 1484, 1112, 965, 847, 582, 555,
+         550, 462, 366, 360, 282, 273, 265]
+
+wordcloud = WordCloud(width=1300, height=620)
+wordcloud.add("", name, value, word_size_range=[20, 100])
+
+wordcloud.show_config()
+wordcloud.render()
+```
+
+![](img\1.jpg)
+
+```python
+import requests
+from bs4 import BeautifulSoup as bs
+import re
+from bosonnlp import BosonNLP
+from pyecharts import WordCloud
+
+
+def GetRequests(url):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    request = requests.get(url=url, headers=headers)
+    return request.content
+
+
+url = 'https://news.sina.com.cn/c/xl/2019-05-08/doc-ihvhiews0648098.shtml'
+
+request = GetRequests(url)
+
+soup = bs(request, 'lxml')
+
+pattern = re.compile(r'<p>(.*)?</p>')
+
+s = ''
+
+for p in soup.findAll('p'):
+    p = str(p)
+    m = pattern.match(p)
+    if m:
+        s += m.group(1).strip()
+
+nlp = BosonNLP('jkk69hrE.34263.MwdMVTH2I0Zs')
+
+result = nlp.tag(s)[0]
+dict = {}
+
+print(type(dict))
+for word, tag in zip(result['word'], result['tag']):
+
+    if tag[0] == 'n' or tag == 'v' or tag == 'ad':
+        print(word, tag)
+        if word in dict.keys():
+            dict[word] += 1
+        else:
+            dict[word] = 1
+
+name = dict.keys()
+value = dict.values()
+
+wordcloud = WordCloud(width=1300, height=620)
+wordcloud.add("", name, value, word_size_range=[20, 100])
+
+wordcloud.show_config()
+wordcloud.render()
+```
+
+![](img/2.jpg)
 
